@@ -1,7 +1,9 @@
 #include "header/wnd.h"
+#include <iostream>
 
 Wnd::Wnd(const int w, const int h){
     Create(w, h);
+    ClearWindow(window, 0);
 }
 void Wnd::putpixel(int x, int y, unsigned int color){
     PutPixel(window, x, y, color);
@@ -9,9 +11,7 @@ void Wnd::putpixel(int x, int y, unsigned int color){
 void Wnd::Create(int w, int h){
     window = WindowCreate(w, h);
 }
-//int Wnd::WndProcessMessage(void){
-//    return WindowProcessMessage();
-//}
+
 void Wnd::Update(){
     ClearWindow(window, 0);
     WindowUpdate(window);
@@ -27,6 +27,15 @@ void Wnd::Destroy(){
 }
 Wnd::~Wnd(){
     Destroy();
+}
+void Wnd::Clear(unsigned int color){
+    if(window){
+        ClearWindow(window, color);
+    }
+    else{
+        std::cout<<"Error: Window is null";
+    }
+    return;
 }
 int Wnd::getw(){
     return get_width(window);

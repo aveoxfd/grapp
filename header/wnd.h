@@ -9,7 +9,7 @@ class Wnd{
     
     public:
     Wnd(const int w, const int h);
-    void Clear(int);
+    void Clear(unsigned int);
     void putpixel(int x, int y, unsigned int color);
     void Update(void);
     void Sleep(int);

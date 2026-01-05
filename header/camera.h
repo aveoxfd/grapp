@@ -10,9 +10,9 @@ class Camera{
     private:
     position pos;
     double yaw = 0, pitch = 0, roll = 0; //alpha, bheta, ghamma 
-    int distance_of_view = 1000;
-    double fov = 50;
-    typedef void(*Render_function)(const Camera&, Wnd&, const Object&);
+    double fov = 90;
+    typedef void(*Render_function)(const Camera&, const Object&);
+
     Render_function render_function;
     vector_packet forward = {cos(pitch)*sin(yaw), sin(pitch), cos(pitch)*cos(yaw)}; //vector of view {x, y, z}; start = +z
     vector_packet right = {cos(yaw), 0, -sin(yaw)};                                 //vector right {1, 0, 0}
@@ -22,10 +22,9 @@ class Camera{
 
     Wnd *window;
 
-    int speed = 2;
     double speed_rotation = 0.1;
 
-    static void default_render_function(const Camera& cam, Wnd& wnd, const Object& obj){
+    static void default_render_function(const Camera& cam, const Object& obj){
         position *nodes = obj.get_nodes();
         double fov = (double)cam.get_fov() * M_PI / 180.0;   //!!!
         double scale = 1.0 / tan(fov / 2.0);                 //!!!
@@ -43,11 +42,11 @@ class Camera{
             //delta_x = orig_delta_x*cos(cam.get_roll()) + orig_delta_y*sin(cam.get_roll());
             //delta_y = -orig_delta_x*sin(cam.get_roll()) + orig_delta_y*cos(cam.get_roll());
 
-            delta_x = (delta_x/delta_z)*wnd.getw()+wnd.getw()/2;
-            delta_y = (delta_y/delta_z)*wnd.geth()+wnd.geth()/2;
+            delta_x = (delta_x/delta_z)*scale*cam.window->getw()+cam.window->getw()/2;
+            delta_y = (delta_y/delta_z)*scale*cam.window->geth()+cam.window->geth()/2;
 
-            if(delta_x >= 0 && delta_x < wnd.getw() && delta_y >= 0 && delta_y < wnd.geth()){
-                wnd.putpixel(delta_x, delta_y, 0xffffffff);
+            if(delta_x >= 0 && delta_x < cam.window->getw() && delta_y >= 0 && delta_y < cam.window->geth()){
+                cam.window->putpixel(delta_x, delta_y, 0xffffffff);
             }
         }
     }
@@ -65,7 +64,7 @@ class Camera{
 
             double length = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
             if(length < 0.001) continue;
-            int steps = (int)(length * 1000); //how much steps
+            int steps = (int)(length * 2000); //how much steps
             if(steps < 2) steps = 2;
 
             for(int j = 0; j <= steps; j++){
@@ -75,12 +74,10 @@ class Camera{
                 double iy = start.y + diff_y * t;
                 double iz = start.z + diff_z * t;
                 
-                
                 Object pixel((position){ix, iy, iz}, 1);
                 
-                this->render(pixel);
+                this->render_object(pixel);
             }
-
         }
     }
     Camera(position pos, int width, int height, Wnd *window): pos(pos), width(width), height(height), window(window), render_function(nullptr){
@@ -89,6 +86,8 @@ class Camera{
     Camera(position pos, Wnd *window): pos(pos), width(0), height(0), window(window), render_function(nullptr), fov(90){
         render_function = default_render_function;
     };
+    ~Camera(){
+    }
 
     void set_window(Wnd window){
         this->window = &window;
@@ -100,17 +99,11 @@ class Camera{
         return;
     }
 
-    template<typename Func>
-    void set_render_functor(Func function){
-        static Func stored_function = function;
-        render_function = [](const Camera& cam, Wnd& wnd, const Object& obj){
-            stored_function(cam, wnd, obj);
-        };
+    void render_object(Object &object){
+        render_function(*this, object);
         return;
     }
-    void render(Object &object){
-        render_function(*this, *window, object);
-        return;
+    void support_render(void){
     }
     position get_position(void)const{
         return pos;
@@ -138,20 +131,14 @@ class Camera{
     }
     void rotate_roll(double dr){
         roll+=dr;
-        if(roll==1)roll=-1;
-        if(roll==-1)roll=1;
         return;
     }
     void rotate_yaw(double dy){
         yaw+=dy;
-        if(yaw==1)yaw=-1;
-        if(yaw==-1)yaw=1;
         return;
     }
     void rotate_pitch(double dp){
         pitch+=dp;
-        if(pitch==1)pitch=-1;
-        if(pitch==-1)pitch=1;
         return;
     }
     void move(vector_packet vector){ //{dx, dy, dz}

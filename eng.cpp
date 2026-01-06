@@ -62,6 +62,7 @@ int main(){
     Object floor({0,0,0}, flr, 1);
     Object pr({0, 0, 0}, p, p_edges, 1);
     Wnd window1(1080, 720);
+    window1.Set_name("3DTest");
     Camera camera((position){0, 0, 0}, window1.getw(), window1.geth(), &window1);
 
     global_camera = &camera;

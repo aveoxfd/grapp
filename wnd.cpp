@@ -52,3 +52,6 @@ void Wnd::WndSetMouseButtonCallback(void(*func)(Window*, int, int)){
 void Wnd::WndSetMouseMoveCallback(void(*func)(Window*, int, int)){
     WindowSetMouseMoveCallback(window, func);
 }
+void Wnd::Set_name(const char *window_name){
+    set_name(window, window_name);
+}

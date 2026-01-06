@@ -20,6 +20,7 @@ class Wnd{
     void WndSetKeyCallback(void(*func)(Window*, int, int));
     void WndSetMouseButtonCallback(void(*func)(Window*, int, int));
     void WndSetMouseMoveCallback(void(*func)(Window*, int, int));
+    void Set_name(const char window_name[]);
 
     ~Wnd();
 };

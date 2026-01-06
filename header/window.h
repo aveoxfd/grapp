@@ -5,6 +5,8 @@
 extern "C"{
 #endif
 
+#define ERR_CODE -1
+
 #if defined(W_STATIC)
   #define W_API
 #elif defined(_WIN32) || defined(__CYGWIN__)
@@ -31,6 +33,7 @@ W_API void WSleep(int);
 W_API unsigned int ARGB(unsigned char a, unsigned char r, unsigned char g, unsigned char b);
 W_API int get_width(Window* wnd);
 W_API int get_height(Window* wnd);
+W_API void set_name(Window* wnd, const char *window_name);
 
 typedef void (*WindowKeyCallback)(Window* wnd, int key, int pressed); // type
 typedef void (*WindowMouseButtonCallback)(Window* wnd, int button, int pressed);

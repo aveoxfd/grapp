@@ -111,6 +111,39 @@ int main(){
         return;
     });
 
+    camera.add_render_funtion(
+        [](const Camera& cam, const Object& obj) -> void{
+            if(!obj.get_edges())return;
+            
+            for(int i = 0; i<obj.get_edge_count(); i++){
+                position start = obj.get_real_position(obj.get_edges()[i][0]);
+                position end = obj.get_real_position(obj.get_edges()[i][1]);
+                double diff_x = end.x - start.x;
+                double diff_y = end.y - start.y;
+                double diff_z = end.z - start.z;
+                
+                double length = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
+                if(length < 0.001) continue;
+                int steps = (int)(length * cam.get_render_scale()); //how much steps
+                if(steps < 2) steps = 2;
+                
+                for(int j = 0; j <= steps; j++){
+                    double t = (double)j / steps;
+
+                    double ix = start.x + diff_x * t;
+                    double iy = start.y + diff_y * t;
+                    double iz = start.z + diff_z * t;
+                    
+                    pixel pix;
+                    pix.pos.x = ix;
+                    pix.pos.y = iy;
+                    pix.pos.z = iz;
+                    
+                    cam.draw_pixel(pix, 0xffffffff);
+                }
+            }
+        }
+    );
     while(WindowProcessMessage()){
 
         if (hold & _A_HOLD) {
@@ -153,14 +186,12 @@ int main(){
         cube.update();
         cube2.update();
 
-        camera.render_object(cube);
-        camera.render_object(pr);
-        camera.render_object(cube2);
+        camera.render(cube);
+        camera.render(pr);
+        camera.render(cube2, 0);
 
-        camera.render_shapes(cube);
-        camera.render_shapes(cube2);
-        camera.render_shapes(pr);
-        Object pixel(cube.get_real_position(0), 1);
+        camera.render(cube, 1);
+
         camera.update();
 
         WSleep(16);

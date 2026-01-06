@@ -5,15 +5,22 @@
 #include "wnd.h"
 #include <math.h>
 #include "vectorpacket.h"
+#include "pixel.h"
 
 class Camera{
     private:
     position pos;
     double yaw = 0, pitch = 0, roll = 0; //alpha, bheta, ghamma 
-    double fov = 90;
-    typedef void(*Render_function)(const Camera&, const Object&);
+    double fov = 90 * M_PI / 180.0;
+    double scale = 1.0 / tan(fov / 2.0);
+    int rander_scale = 4000;
+    int max_distant_view = 1000;
+    typedef void(*Render_function)(const Camera&, const Object&); //render object funtion type
 
-    Render_function render_function;
+    Render_function* array_render_functions = nullptr;
+    int render_function_count = 0;
+
+    //Render_function render_function;
     vector_packet forward = {cos(pitch)*sin(yaw), sin(pitch), cos(pitch)*cos(yaw)}; //vector of view {x, y, z}; start = +z
     vector_packet right = {cos(yaw), 0, -sin(yaw)};                                 //vector right {1, 0, 0}
     vector_packet up = {-sin(yaw)*sin(pitch), cos(pitch), -cos(yaw)*sin(pitch)};    //vector up {0, 1, 0}
@@ -24,10 +31,9 @@ class Camera{
 
     double speed_rotation = 0.1;
 
+    //for example render function
     static void default_render_function(const Camera& cam, const Object& obj){
         position *nodes = obj.get_nodes();
-        double fov = (double)cam.get_fov() * M_PI / 180.0;   //!!!
-        double scale = 1.0 / tan(fov / 2.0);                 //!!!
 
         for (int i = 0; i<obj.get_node_count(); i++){ //main cycle of rendering
             position real_node_position = obj.get_real_position(i);
@@ -42,51 +48,24 @@ class Camera{
             //delta_x = orig_delta_x*cos(cam.get_roll()) + orig_delta_y*sin(cam.get_roll());
             //delta_y = -orig_delta_x*sin(cam.get_roll()) + orig_delta_y*cos(cam.get_roll());
 
-            delta_x = (delta_x/delta_z)*scale*cam.window->getw()+cam.window->getw()/2;
-            delta_y = (delta_y/delta_z)*scale*cam.window->geth()+cam.window->geth()/2;
+            delta_x = (delta_x/delta_z)*cam.scale*cam.window->getw()+cam.window->getw()/2;
+            delta_y = (delta_y/delta_z)*cam.scale*cam.window->geth()+cam.window->geth()/2;
 
             if(delta_x >= 0 && delta_x < cam.window->getw() && delta_y >= 0 && delta_y < cam.window->geth()){
-                cam.window->putpixel(delta_x, delta_y, 0xffffffff);
+                if(delta_z < cam.max_distant_view)cam.window->putpixel(delta_x, delta_y, 0xffffffff);
             }
         }
     }
  
     public:
-    void render_shapes(const Object& object){
-        if(!object.get_edges())return;
-
-        for(int i = 0; i<object.get_edge_count(); i++){
-            position start = object.get_real_position(object.get_edges()[i][0]);
-            position end = object.get_real_position(object.get_edges()[i][1]);
-            double diff_x = end.x - start.x;
-            double diff_y = end.y - start.y;
-            double diff_z = end.z - start.z;
-
-            double length = sqrt(diff_x*diff_x + diff_y*diff_y + diff_z*diff_z);
-            if(length < 0.001) continue;
-            int steps = (int)(length * 2000); //how much steps
-            if(steps < 2) steps = 2;
-
-            for(int j = 0; j <= steps; j++){
-                double t = (double)j / steps;
-                
-                double ix = start.x + diff_x * t;
-                double iy = start.y + diff_y * t;
-                double iz = start.z + diff_z * t;
-                
-                Object pixel((position){ix, iy, iz}, 1);
-                
-                this->render_object(pixel);
-            }
-        }
-    }
-    Camera(position pos, int width, int height, Wnd *window): pos(pos), width(width), height(height), window(window), render_function(nullptr){
+    Camera(position pos, int width, int height, Wnd *window): pos(pos), width(width), height(height), window(window){
         set_render_function(default_render_function);
     }
-    Camera(position pos, Wnd *window): pos(pos), width(0), height(0), window(window), render_function(nullptr), fov(90){
-        render_function = default_render_function;
+    Camera(position pos, Wnd *window): pos(pos), width(0), height(0), window(window), fov(90){
+        set_render_function(default_render_function);
     };
     ~Camera(){
+        window->Destroy();
     }
 
     void set_window(Wnd window){
@@ -94,17 +73,51 @@ class Camera{
         return;
     }
 
-    void set_render_function(Render_function function){
-        render_function = function;
+    void set_render_function(Render_function function, int index = -1){
+        if (index >= 0 && index < render_function_count){
+            array_render_functions[index] = function;
+            return;
+        }
+        if (!array_render_functions){
+            array_render_functions = new Render_function[1];
+            array_render_functions[0] = function;
+            render_function_count = 1;
+            return;
+        }
+    }
+    void add_render_funtion(Render_function function){
+        Render_function* new_array = new Render_function[render_function_count + 1];
+        for (int i = 0; i < render_function_count; i++){
+            new_array[i] = array_render_functions[i];
+        }
+        new_array[render_function_count] = function;
+        delete[] array_render_functions;
+        array_render_functions = new_array;
+        render_function_count++;
+        return;
+    }
+    void delete_render_functions(const int n){
+        if (array_render_functions && n >= 0 && n < render_function_count){
+            Render_function* new_array = new Render_function[render_function_count - 1];
+            for (int i = 0, j = 0; i < render_function_count; i++){
+                if (i != n) {
+                    new_array[j++] = array_render_functions[i];
+                }
+            }
+            delete[] array_render_functions;
+            array_render_functions = new_array;
+            render_function_count--;
+        }
         return;
     }
 
-    void render_object(Object &object){
-        render_function(*this, object);
+    void render(Object &object, int render_mode = 0){
+        if(render_mode < render_function_count && array_render_functions[render_mode] != nullptr){
+            array_render_functions[render_mode](*this, object);
+        }
         return;
     }
-    void support_render(void){
-    }
+
     position get_position(void)const{
         return pos;
     }
@@ -150,6 +163,30 @@ class Camera{
     void set_fov(int new_fov){
         fov=new_fov;
         return;
+    }
+    void draw_pixel(pixel pix, int color)const{
+        position normalized_pos = (position){pix.pos.x - pos.x, pix.pos.y - pos.y, pix.pos.z - pos.z};
+        double delta_z = normalized_pos.x*forward.x + normalized_pos.y*forward.y + normalized_pos.z*forward.z;
+        if (delta_z<0.01)return;
+        double delta_x = normalized_pos.x*right.x + normalized_pos.y*right.y + normalized_pos.z*right.z;
+        double delta_y = normalized_pos.x*up.x + normalized_pos.y*up.y + normalized_pos.z*up.z;
+
+        delta_x = (delta_x/delta_z) * scale * window->getw() + window->getw()/2;
+        delta_y = (delta_y/delta_z) * scale * window->geth() + window->geth()/2;
+
+        if (delta_x >= 0 && delta_x <= window->getw() && delta_y >= 0 && delta_y <= window->geth()){
+            if(delta_z < max_distant_view)window->putpixel(delta_x, delta_y, color);
+        }
+        return;
+    }
+    Wnd* get_window(){
+        return window;
+    }
+    int get_render_scale()const{
+        return rander_scale;
+    }
+    int get_max_distant_view()const{
+        return max_distant_view;
     }
 };
 

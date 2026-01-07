@@ -4,7 +4,6 @@
 
 //smart edges finder
 
-Camera *global_camera = nullptr;
 static int hold = 0;
 #define _W_HOLD 0b000000000000000001
 #define _A_HOLD 0b000000000000000010
@@ -64,8 +63,6 @@ int main(){
     Wnd window1(1080, 720);
     window1.Set_name("3DTest");
     Camera camera((position){0, 0, 0}, window1.getw(), window1.geth(), &window1);
-
-    global_camera = &camera;
 
     window1.WndSetKeyCallback([](Window* wnd, int key, int pressed){
         if (key == 'A') {
@@ -143,7 +140,7 @@ int main(){
                 }
             }
         }
-    );
+    ); //[1]
     while(WindowProcessMessage()){
         char c;
         c++;
@@ -154,34 +151,34 @@ int main(){
         delete[] str;
 
         if (hold & _A_HOLD) {
-            global_camera->move({0, 0, -0.1});
+            camera.move({0, 0, -0.1});
         }
         if (hold & _D_HOLD) {
-            global_camera->move({0, 0, 0.1});
+            camera.move({0, 0, 0.1});
         }
         if (hold & _W_HOLD) {
-            global_camera->move({0.1, 0, 0});
+            camera.move({0.1, 0, 0});
         }
         if (hold & _S_HOLD) {
-            global_camera->move({-0.1, 0, 0});
+            camera.move({-0.1, 0, 0});
         }
         if (hold & _I_HOLD) {
-            global_camera->rotate_pitch(-0.01);
+            camera.rotate_pitch(-0.01);
         }
         if (hold & _K_HOLD) {
-            global_camera->rotate_pitch(0.01);
+            camera.rotate_pitch(0.01);
         }
         if (hold & _J_HOLD) {
-            global_camera->rotate_yaw(-0.01);
+            camera.rotate_yaw(-0.01);
         }
         if (hold & _L_HOLD) {
-            global_camera->rotate_yaw(0.01);
+            camera.rotate_yaw(0.01);
         }
         if (hold & _O_HOLD) {
-            global_camera->move(vector_packet{0,-0.1,0});
+            camera.move(vector_packet{0,-0.1,0});
         }
         if (hold & _U_HOLD) {
-            global_camera->move(vector_packet{0,0.1,0});
+            camera.move(vector_packet{0,0.1,0});
         }
 
         window1.Update();
@@ -198,6 +195,8 @@ int main(){
         camera.render(cube2, 0);
 
         camera.render(cube, 1);
+        camera.render(cube2, 1);
+        camera.render(pr, 1);
 
         camera.update();
 

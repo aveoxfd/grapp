@@ -145,6 +145,13 @@ int main(){
         }
     );
     while(WindowProcessMessage()){
+        char c;
+        c++;
+        char *str = new char[2];
+        str[0] = c;
+        str[1] = 0;
+        window1.Set_name(str);
+        delete[] str;
 
         if (hold & _A_HOLD) {
             global_camera->move({0, 0, -0.1});

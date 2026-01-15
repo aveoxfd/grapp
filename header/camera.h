@@ -37,7 +37,11 @@ class Camera{
 
         for (int i = 0; i<obj.get_node_count(); i++){ //main cycle of rendering
             position real_node_position = obj.get_real_position(i);
-            position normalize_pos = (position){real_node_position.x-cam.get_position().x, real_node_position.y-cam.get_position().y, real_node_position.z-cam.get_position().z};
+            position normalize_pos = (position){
+                real_node_position.x - cam.get_position().x,
+                real_node_position.y - cam.get_position().y,
+                real_node_position.z - cam.get_position().z
+            };
             double delta_z = normalize_pos.x*cam.get_vector_coeff_forward().x + normalize_pos.y*cam.get_vector_coeff_forward().y + normalize_pos.z*cam.get_vector_coeff_forward().z;
             if(delta_z<0.1)continue;
             double delta_x = normalize_pos.x*cam.get_vector_coeff_right().x + normalize_pos.y*cam.get_vector_coeff_right().y + normalize_pos.z*cam.get_vector_coeff_right().z;
@@ -66,6 +70,9 @@ class Camera{
     };
     ~Camera(){
         window->Destroy();
+        if(array_render_functions){
+            delete[] array_render_functions;
+        }
     }
 
     void set_window(Wnd window){

@@ -190,13 +190,9 @@ int main(){
         cube.update();
         cube2.update();
 
-        camera.render(cube);
-        camera.render(pr);
-        camera.render(cube2, 0);
-
-        camera.render(cube, 1);
-        camera.render(cube2, 1);
-        camera.render(pr, 1);
+        camera.render(cube, PIPELINE_MODE, 0);
+        camera.render(pr, PIPELINE_MODE);
+        camera.render(cube2, PIPELINE_MODE);
 
         camera.update();
 

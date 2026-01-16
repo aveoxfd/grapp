@@ -7,6 +7,9 @@
 #include "vectorpacket.h"
 #include "pixel.h"
 
+#define DEFAULT_MODE 0
+#define PIPELINE_MODE 1
+
 class Camera{
     private:
     position pos;
@@ -17,13 +20,13 @@ class Camera{
     int max_distant_view = 1000;
     typedef void(*Render_function)(const Camera&, const Object&); //render object funtion type
 
-    Render_function* array_render_functions = nullptr;
-    int render_function_count = 0;
+    Render_function* array_render_functions = nullptr; //pipe
+    int array_render_functions_count = 0;
 
     //Render_function render_function;
-    vector_packet forward = {cos(pitch)*sin(yaw), sin(pitch), cos(pitch)*cos(yaw)}; //vector of view {x, y, z}; start = +z
-    vector_packet right = {cos(yaw), 0, -sin(yaw)};                                 //vector right {1, 0, 0}
-    vector_packet up = {-sin(yaw)*sin(pitch), cos(pitch), -cos(yaw)*sin(pitch)};    //vector up {0, 1, 0}
+    vector_packet forward; //vector of view {x, y, z}; start = +z
+    vector_packet right;                                 //vector right {1, 0, 0}
+    vector_packet up;    //vector up {0, 1, 0}
 
     int width, height;; // pixels
 
@@ -64,9 +67,11 @@ class Camera{
     public:
     Camera(position pos, int width, int height, Wnd *window): pos(pos), width(width), height(height), window(window){
         set_render_function(default_render_function);
+        update();
     }
     Camera(position pos, Wnd *window): pos(pos), width(0), height(0), window(window), fov(90){
         set_render_function(default_render_function);
+        update();
     };
     ~Camera(){
         window->Destroy();
@@ -81,46 +86,61 @@ class Camera{
     }
 
     void set_render_function(Render_function function, int index = -1){
-        if (index >= 0 && index < render_function_count){
+        if (index >= 0 && index < array_render_functions_count){
             array_render_functions[index] = function;
             return;
         }
         if (!array_render_functions){
             array_render_functions = new Render_function[1];
             array_render_functions[0] = function;
-            render_function_count = 1;
+            array_render_functions_count = 1;
             return;
         }
     }
     void add_render_funtion(Render_function function){
-        Render_function* new_array = new Render_function[render_function_count + 1];
-        for (int i = 0; i < render_function_count; i++){
+        Render_function* new_array = new Render_function[array_render_functions_count + 1];
+        for (int i = 0; i < array_render_functions_count; i++){
             new_array[i] = array_render_functions[i];
         }
-        new_array[render_function_count] = function;
+        new_array[array_render_functions_count] = function;
         delete[] array_render_functions;
         array_render_functions = new_array;
-        render_function_count++;
+        array_render_functions_count++;
         return;
     }
-    void delete_render_functions(const int n){
-        if (array_render_functions && n >= 0 && n < render_function_count){
-            Render_function* new_array = new Render_function[render_function_count - 1];
-            for (int i = 0, j = 0; i < render_function_count; i++){
-                if (i != n) {
+    void delete_render_function(const int _index){
+        if (array_render_functions && _index >= 0 && _index < array_render_functions_count){
+            Render_function* new_array = new Render_function[array_render_functions_count - 1];
+            for (int i = 0, j = 0; i < array_render_functions_count; i++){
+                if (i != _index) {
                     new_array[j++] = array_render_functions[i];
                 }
             }
             delete[] array_render_functions;
             array_render_functions = new_array;
-            render_function_count--;
+            array_render_functions_count--;
         }
         return;
     }
 
-    void render(Object &object, int render_mode = 0){
-        if(render_mode < render_function_count && array_render_functions[render_mode] != nullptr){
-            array_render_functions[render_mode](*this, object);
+    void render(
+        Object &object, 
+        const unsigned char render_mode = 0,
+        int _index = 0
+    ){
+        if(_index > array_render_functions_count)return;
+
+        switch (render_mode){
+            case 0: //default, by selecting current index
+            if (array_render_functions[_index] == nullptr)return;
+            array_render_functions[_index](*this, object);
+            break;
+
+            case 1: //pipeline method
+            for (int i = 0; i<array_render_functions_count; i++){
+                array_render_functions[i](*this, object);
+            }
+            break;
         }
         return;
     }
@@ -194,6 +214,9 @@ class Camera{
     }
     int get_max_distant_view()const{
         return max_distant_view;
+    }
+    double get_speed_rotation(void)const{
+        return speed_rotation;
     }
 };
 

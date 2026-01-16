@@ -36,7 +36,6 @@ class Camera{
 
     //for example render function
     static void default_render_function(const Camera& cam, const Object& obj){
-        position *nodes = obj.get_nodes();
 
         for (int i = 0; i<obj.get_node_count(); i++){ //main cycle of rendering
             position real_node_position = obj.get_real_position(i);

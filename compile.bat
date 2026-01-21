@@ -1,5 +1,10 @@
 @echo off
 setlocal
+set "PATH=%SystemRoot%\System32;%PATH%"
+set "TEMP=%CD%\_tmp"
+set "TMP=%SystemRoot%\Temp\vers_temp_%RANDOM%.txt"
+
+if not exist "%TEMP%" mkdir "%TEMP%"
 
 set "VERS_URL=https://raw.githubusercontent.com/aveoxfd/winwindow/main/vers"
 set "LIB_URL=https://raw.githubusercontent.com/aveoxfd/winwindow/main/libwinwindow.a"
@@ -14,8 +19,7 @@ if exist "%LOCAL_VER_FILE%" (
 )
 
 :: download remote vers to a temporary file
-set "TMP=%TEMP%\vers_tmp_%RANDOM%.txt"
-curl -s -L -o "%TMP%" "%VERS_URL%"
+curl.exe -s -L -o "%TMP%" "%VERS_URL%"
 if errorlevel 1 (
   echo Error: failed to download vers from %VERS_URL%
   del "%TMP%" >nul 2>&1
@@ -50,7 +54,7 @@ echo Remote numeric: %REMOTE_NUM%
 if %REMOTE_NUM% GTR %LOCAL_NUM% (
   echo Remote is newer - downloading library...
   if not exist "%CD%\lib" mkdir "%CD%\lib"
-  curl -L -o "%LIB_TARGET%" "%LIB_URL%"
+  curl.exe -s -L -o "%LIB_TARGET%" "%LIB_URL%"
   if errorlevel 1 (
     echo Error: failed to download library.
     del "%TMP%" >nul 2>&1
@@ -62,10 +66,13 @@ if %REMOTE_NUM% GTR %LOCAL_NUM% (
   echo Local is up-to-date. No download.
 )
 
+if not exist "%CD%\bin" mkdir "%CD%\bin"
+
 del "%TMP%" >nul 2>&1
+goto cmp
 exit /b 0
 
-::  function: version -> number (major*1000 + minor) 
+::  function: version -> number (major*1000 + minor)
 :ver2num
 :: args: %1 = version (e.g. 1.2.3), %2 = name of output variable
 setlocal EnableDelayedExpansion
@@ -79,4 +86,9 @@ if "!maj!"=="" set "maj=0"
 if "!min!"=="" set "min=0"
 set /a num=(1000 * !maj!) + !min!
 endlocal & set "%2=%num%"
+goto :eof
+
+
+:cmp
+g++ -O2 -DW_STATIC -static -static-libgcc -static-libstdc++ -o bin/grapp.exe eng.cpp wnd.cpp -Iheader -Llib -lwinwindow -lopengl32 -lgdi32 -luser32
 goto :eof

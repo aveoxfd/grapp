@@ -56,7 +56,7 @@ if not %REMOTE_NUM% == %LOCAL_NUM% (
     echo Library is up to date.
 )
 
-g++ -O2 -DW_STATIC -static -static-libgcc -static-libstdc++ -o bin/grapp.exe eng.cpp wnd.cpp -Iheader -Llib -lwinwindow -lopengl32 -lgdi32 -luser32
+gppbuild.bat
 ::del "%PROJECT_TEMP%\remote_version.txt"
 exit /b 0
 

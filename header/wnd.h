@@ -1,7 +1,7 @@
 #ifndef WND_H
 #define WND_H
 
-#include "window.h"
+#include "winwindow.h"
 class Wnd{
     private:
     Window* window;

@@ -3,7 +3,7 @@
 set "PROJECT_TEMP=%CD%\project"
 set "VERSION_URL=https://raw.githubusercontent.com/aveoxfd/winwindow/main/version.txt"
 set "LIB_URL=https://raw.githubusercontent.com/aveoxfd/winwindow/main/libwinwindow.a"
-set "H_URL=https://raw.githubusercontent.com/aveoxfd/winwindow/main/headers/winw.h"
+set "H_URL=https://raw.githubusercontent.com/aveoxfd/winwindow/main/headers/winwindow.h"
 set "LIB_TARGET=%CD%\lib\libwinwindow.a"
 set "LOCAL_VERSION_FILE=%CD%\project\version.txt"
 set "REMOTE_VERSION_FILE=%PROJECT_TEMP%\remote_version.txt"
@@ -34,19 +34,19 @@ for /f "tokens=2 delims==" %%A in (
 echo Remote version = %REMOTE_VERSION%
 
 ::CONVERT TO NUMBERS
-call :ver2num "%LOCAL_VERSION%" LOCAL_NUM
-call :ver2num "%REMOTE_VERSION%" REMOTE_NUM
-
-echo Local numeric  = %LOCAL_NUM%
-echo Remote numeric = %REMOTE_NUM%
+::call :ver2num "%LOCAL_VERSION%" LOCAL_NUM
+::call :ver2num "%REMOTE_VERSION%" REMOTE_NUM
+::
+::echo Local numeric  = %LOCAL_NUM%
+::echo Remote numeric = %REMOTE_NUM%
 
 ::COMPARE
-if not %REMOTE_NUM% == %LOCAL_NUM% (
+if not "%REMOTE_VERSION%"=="%LOCAL_VERSION%" (
     echo Updating library...
     if exist "%LIB_TARGET%" del "%LIB_TARGET%"
     curl.exe -s -L -o "%LIB_TARGET%" "%LIB_URL%"
-    del "%CD%\header\window.h"
-    curl.exe -s -L -0 "%CD%\header\window.h" "%H_URL%"
+    del "%CD%\header\winwindow.h"
+    curl.exe -s -L -o "%CD%\header\winwindow.h" "%H_URL%"
     if errorlevel 1 (
         echo Error: failed to download library
         exit /b 2
